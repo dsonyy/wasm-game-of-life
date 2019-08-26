@@ -6,15 +6,14 @@ import (
 	"syscall/js"
 )
 
-const edge = 10
 const backgroundColor = "#111111"
-const color = "#888888"
+const color = "#ffffff"
 
 type Game struct {
 	board  [][]int
-	width  float64
-	height float64
-	cell   float64
+	width  int
+	height int
+	cell   int
 }
 
 // func countNeighbours(g Game, x int, y int) int {
@@ -94,9 +93,9 @@ func initCanvases() {
 	games = make(map[string]Game)
 
 	for i := 0; i < canvases.Length(); i++ {
-		cell := 10.0
-		width := canvases.Index(i).Get("width").Float() / cell
-		height := canvases.Index(i).Get("height").Float() / cell
+		cell := 10
+		width := canvases.Index(i).Get("width").Int() / cell
+		height := canvases.Index(i).Get("height").Int() / cell
 		id := canvases.Index(i).Get("id").String()
 
 		game := Game{[][]int{}, width, height, cell}
@@ -128,7 +127,24 @@ func updateCanvases() {
 }
 
 func renderCanvases() {
+	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
 
+	for i := 0; i < canvases.Length(); i++ {
+		context := canvases.Index(i).Call("getContext", "2d")
+		id := canvases.Index(i).Get("id").String()
+
+		for y := 0; y < games[id].height; y++ {
+			for i := 0; i < len(games[id].board[y]); i++ {
+				edge := games[id].cell
+				yPos := y * edge
+				xPos := games[id].board[y][i] * edge
+
+				context.Call("rect", xPos, yPos, edge, edge)
+				context.Set("fillStyle", color)
+				context.Call("fill")
+			}
+		}
+	}
 }
 
 func main() {
@@ -139,6 +155,7 @@ func main() {
 	fmt.Println(games)
 	fillCanvases(10)
 	fmt.Println(games)
+	renderCanvases()
 
 	<-c
 }
