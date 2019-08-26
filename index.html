@@ -4,13 +4,14 @@
 		<script src="wasm_exec.js"></script>
 	</head>
 	<body>
-
-
+		</style>
+		<canvas id="game" data-conways width="300px" height="300px" style="background-color: red">
+		</canvas>
 
 
 		<script>
 			function loop() {
-				asdf();
+				iterate();
 			}
 
 			new Promise(function(resolve, reject) {
