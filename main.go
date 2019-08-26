@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"syscall/js"
 )
 
@@ -96,9 +97,30 @@ func initCanvases() {
 		cell := 10.0
 		width := canvases.Index(i).Get("width").Float() / cell
 		height := canvases.Index(i).Get("height").Float() / cell
+		id := canvases.Index(i).Get("id").String()
 
-		games[canvases.Index(i).Get("id").String()] = Game{[][]int{}, width, height, cell}
+		game := Game{[][]int{}, width, height, cell}
+		for y := 0; y < int(height); y++ {
+			game.board = append(game.board, []int{})
+		}
+		games[id] = game
 	}
+}
+
+func fillCanvases(percentage int) {
+	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
+
+	for i := 0; i < canvases.Length(); i++ {
+		id := canvases.Index(i).Get("id").String()
+		for y := 0; y < int(games[id].height); y++ {
+			for x := 0; x < int(games[id].width); x++ {
+				if rand.Intn(100) < percentage {
+					games[id].board[y] = append(games[id].board[y], x)
+				}
+			}
+		}
+	}
+
 }
 
 func updateCanvases() {
@@ -114,6 +136,8 @@ func main() {
 	fmt.Println("Hello, WebAssembly!")
 
 	initCanvases()
+	fmt.Println(games)
+	fillCanvases(10)
 	fmt.Println(games)
 
 	<-c
