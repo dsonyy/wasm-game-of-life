@@ -7,10 +7,10 @@ import (
 )
 
 const backgroundColor = "#111111"
-const color = "#ffffff"
+const color = "#000000"
 
 type Game struct {
-	board  [][]int
+	board  [][]bool
 	width  int
 	height int
 	cell   int
@@ -98,10 +98,17 @@ func initCanvases() {
 		height := canvases.Index(i).Get("height").Int() / cell
 		id := canvases.Index(i).Get("id").String()
 
-		game := Game{[][]int{}, width, height, cell}
-		for y := 0; y < int(height); y++ {
-			game.board = append(game.board, []int{})
+		game := Game{[][]bool{}, width, height, cell}
+		for y := 0; y < height; y++ {
+			game.board = append(game.board, []bool{})
+			for x := 0; x < width; x++ {
+				game.board[y] = append(game.board[y], false)
+			}
 		}
+
+		game.board[2][2] = true
+		game.board[6][5] = true
+
 		games[id] = game
 	}
 }
@@ -111,19 +118,58 @@ func fillCanvases(percentage int) {
 
 	for i := 0; i < canvases.Length(); i++ {
 		id := canvases.Index(i).Get("id").String()
-		for y := 0; y < int(games[id].height); y++ {
-			for x := 0; x < int(games[id].width); x++ {
-				if rand.Intn(100) < percentage {
-					games[id].board[y] = append(games[id].board[y], x)
-				}
+
+		for y := 0; y < games[id].height; y++ {
+			for x := 0; x < games[id].width; x++ {
+				games[id].board[y][x] = percentage > rand.Intn(100)
 			}
 		}
 	}
 
 }
 
+func countNeighbours(g *Game, x int, y int) int {
+	count := 0
+
+	if x > 0 && g.board[x-1][y] {
+		count = count + 1
+	}
+	if x < edge-1 && g.board[x+1][y] {
+		count = count + 1
+	}
+
+	if y > 0 && g.board[x][y-1] {
+		count = count + 1
+	}
+	if y < edge-1 && g.board[x][y+1] {
+		count = count + 1
+	}
+
+	if x > 0 && y > 0 && g.board[x-1][y-1] {
+		count = count + 1
+	}
+	if x < edge-1 && y > 0 && g.board[x+1][y-1] {
+		count = count + 1
+	}
+	if x > 0 && y < edge-1 && g.board[x-1][y+1] {
+		count = count + 1
+	}
+	if x < edge-1 && y < edge-1 && g.board[x+1][y+1] {
+		count = count + 1
+	}
+
+	return count
+}
+
 func updateCanvases() {
 
+	for id, game := range games {
+		for y := 0; y < game.height; y++ {
+			for x := 0; x < game.width; x++ {
+				if (countNeighbours(&game, x, y) == 3 )
+			}
+		}
+	}
 }
 
 func renderCanvases() {
@@ -134,14 +180,13 @@ func renderCanvases() {
 		id := canvases.Index(i).Get("id").String()
 
 		for y := 0; y < games[id].height; y++ {
-			for i := 0; i < len(games[id].board[y]); i++ {
-				edge := games[id].cell
-				yPos := y * edge
-				xPos := games[id].board[y][i] * edge
+			for x := 0; x < games[id].width; x++ {
+				if games[id].board[x][y] == true {
 
-				context.Call("rect", xPos, yPos, edge, edge)
-				context.Set("fillStyle", color)
-				context.Call("fill")
+					context.Call("rect", x*10, y*10, 10, 10)
+					context.Set("fillStyle", color)
+					context.Call("fill")
+				}
 			}
 		}
 	}
@@ -152,9 +197,9 @@ func main() {
 	fmt.Println("Hello, WebAssembly!")
 
 	initCanvases()
-	fmt.Println(games)
+	//fmt.Println(games)
 	fillCanvases(10)
-	fmt.Println(games)
+	//fmt.Println(games)
 	renderCanvases()
 
 	<-c
