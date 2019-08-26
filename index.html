@@ -5,9 +5,10 @@
 	</head>
 	<body>
 		</style>
-		<canvas id="game" data-conways width="300px" height="300px" style="background-color: red">
-		</canvas>
-
+		<canvas id="game" data-conways width="300px" height="300px" style="background-color: red"></canvas>
+		<canvas id="" data-conways width="100px" height="100px" style="background-color: blue"></canvas>
+		<canvas id="" data-conways width="100px" height="100px" style="background-color: black"></canvas>
+		<canvas id="root" data-conways width="80px" height="80px" style="background-color: green"></canvas>
 
 		<script>
 			function loop() {
@@ -21,7 +22,7 @@
 				});
 				setTimeout(resolve, 2000);
 			}).then(function() {
-				loop();
+
 			}).catch(function() {
 
 			});
