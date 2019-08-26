@@ -1,0 +1,29 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<script src="wasm_exec.js"></script>
+	</head>
+	<body>
+
+
+
+
+		<script>
+			function loop() {
+				asdf();
+			}
+
+			new Promise(function(resolve, reject) {
+				const go = new Go();
+				WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+					go.run(result.instance);
+				});
+				setTimeout(resolve, 2000);
+			}).then(function() {
+				loop();
+			}).catch(function() {
+
+			});
+		</script>
+	</body>
+</html>
