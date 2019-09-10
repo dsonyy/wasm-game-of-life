@@ -171,21 +171,21 @@ func updateCanvases() {
 			}
 		}
 
-		start := time.Now()
 
+		start := time.Now()
 		for y := 0; y < games[i].height; y++ {
 			for x := 0; x < games[i].width; x++ {
-				if countNeighbours(i, x, y) == 3 {
+				neighbours := countNeighbours(i, x, y)
+				if neighbours == 3 {
 					updated.board[x][y] = true
-				} else if games[i].board[x][y] && countNeighbours(i, x, y) == 2 {
+				} else if games[i].board[x][y] && neighbours == 2 {
 					updated.board[x][y] = true
 				}
 			}
 		}
 		games[i] = updated
-
 		elapsed := time.Since(start)
-		log.Printf("%s", elapsed)
+		log.Printf("--> %s", elapsed)
 	}
 
 }
@@ -211,6 +211,15 @@ func renderCanvases() {
 	}
 }
 
+func loop(this js.Value, args []js.Value) interface{} {
+
+	log.Println("AAA")
+	updateCanvases()
+
+	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
+	return js.Value{}
+}
+
 func main() {
 	c := make(chan struct{}, 0)
 	fmt.Println("Hello, WebAssembly!")
@@ -218,7 +227,10 @@ func main() {
 	initCanvases()
 	fillCanvases(30)
 
-	for {
+
+	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
+
+	//for {
 		// str := ""
 		// for y := 0; y < games[0].height; y++ {
 		// 	for x := 0; x < games[0].width; x++ {
@@ -232,11 +244,11 @@ func main() {
 		// }
 		// fmt.Println(str)
 
-		updateCanvases()
-		renderCanvases()
+		//updateCanvases()
+		//renderCanvases()
 
-		time.Sleep(500 * time.Millisecond)
-	}
+		//time.Sleep(500 * time.Millisecond)
+	//}
 
 	//fmt.Println(games)
 	//fillCanvases(10)
