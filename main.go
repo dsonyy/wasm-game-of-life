@@ -5,7 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"syscall/js"
-	// "time"
+	"time"
 )
 
 const backgroundColor = "#555"
@@ -120,12 +120,10 @@ func updateCanvases() {
 			}
 		}
 
-		// start := time.Now()
-		log.Println("---------------------------")
+		start := time.Now()
 		for y := 1; y < games[i].height - 1; y++ {
 			for x := 1; x < games[i].width - 1; x++ { 
-				// updated.board = games[i].board
-				if games[i].board[y][x] == 103 || games[i].board[y][x] == 102 {
+				if games[i].board[y][x] == 103 || games[i].board[y][x] == 102 || games[i].board[y][x] == 3 {
 					updated.board[y][x] += 100
 					
 					updated.board[y][x - 1]++
@@ -136,26 +134,13 @@ func updateCanvases() {
 					updated.board[y + 1][x - 1]++
 					updated.board[y + 1][x]++
 					updated.board[y + 1][x + 1]++
-
-				} else if games[i].board[y][x] == 3 {
-					updated.board[y][x] += 100
-					
-					updated.board[y][x - 1]++
-					updated.board[y][x + 1]++
-					updated.board[y - 1][x - 1]++
-					updated.board[y - 1][x]++
-					updated.board[y - 1][x + 1]++
-					updated.board[y + 1][x - 1]++
-					updated.board[y + 1][x]++
-					updated.board[y + 1][x + 1]++
-		
 				}
 			}
 		}
 		
 		games[i] = updated
-		// elapsed := time.Since(start)
-		//log.Printf("--> %s", elapsed)
+		elapsed := time.Since(start)
+		log.Printf("--> %s", elapsed)
 	}
 
 }
