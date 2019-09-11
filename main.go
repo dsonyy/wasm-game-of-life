@@ -5,13 +5,14 @@ import (
 	"log"
 	"math/rand"
 	"syscall/js"
+	// "time"
 )
 
 const backgroundColor = "#555"
 const color = "#eee"
 
 type Game struct {
-	board  [][]int8
+	board  [][]uint8
 	width  int
 	height int
 	cell   int
@@ -28,9 +29,9 @@ func initCanvases() {
 		width := canvases.Index(i).Get("width").Int() / cell
 		height := canvases.Index(i).Get("height").Int() / cell
 
-		game := Game{[][]int8{}, width, height, cell}
+		game := Game{[][]uint8{}, width, height, cell}
 		for y := 0; y < height; y++ {
-			game.board = append(game.board, []int8{})
+			game.board = append(game.board, []uint8{})
 			for x := 0; x < width; x++ {
 				game.board[y] = append(game.board[y], 0)
 			}
@@ -45,14 +46,32 @@ func fillCanvases(percentage int) {
 
 	for i := 0; i < canvases.Length(); i++ {
 
-		for y := 0; y < games[i].height; y++ {
-			for x := 0; x < games[i].width; x++ {
+		for y := 1; y < games[i].height - 1; y++ {
+			for x := 1; x < games[i].width - 1; x++ {
 				if (percentage > rand.Intn(100)) {
-					games[i].board[y][x] = 1
+					games[i].board[y][x] += 100
+					
+					games[i].board[y][x - 1]++
+					games[i].board[y][x + 1]++
+					games[i].board[y - 1][x - 1]++
+					games[i].board[y - 1][x]++
+					games[i].board[y - 1][x + 1]++
+					games[i].board[y + 1][x - 1]++
+					games[i].board[y + 1][x]++
+					games[i].board[y + 1][x + 1]++
 				}
 			}
 		}
+
+		// games[i].board[20][20] = 103
+		// games[i].board[21][21] = 103
+		// games[i].board[21][22] = 103
+		// games[i].board[20][22] = 103
+		// games[i].board[19][22] = 102
+		 
 	}
+
+	log.Println(games[0].board)
 
 }
 
@@ -90,19 +109,69 @@ func countNeighbours(i int, x int, y int) int {
 	return count
 }
 
-
 func updateCanvases() {
-
 	for i := range games {
 
-		updated := Game{[][]int8{}, games[i].width, games[i].height, games[i].cell}
+		updated := Game{[][]uint8{}, games[i].width, games[i].height, games[i].cell}
 		for y := 0; y < updated.height; y++ {
-			updated.board = append(updated.board, []int8{})
+			updated.board = append(updated.board, []uint8{})
 			for x := 0; x < updated.width; x++ {
 				updated.board[y] = append(updated.board[y], 0)
 			}
 		}
 
+		// start := time.Now()
+		log.Println("---------------------------")
+		for y := 1; y < games[i].height - 1; y++ {
+			for x := 1; x < games[i].width - 1; x++ { 
+				// updated.board = games[i].board
+				if games[i].board[y][x] == 103 || games[i].board[y][x] == 102 {
+					updated.board[y][x] += 100
+					
+					updated.board[y][x - 1]++
+					updated.board[y][x + 1]++
+					updated.board[y - 1][x - 1]++
+					updated.board[y - 1][x]++
+					updated.board[y - 1][x + 1]++
+					updated.board[y + 1][x - 1]++
+					updated.board[y + 1][x]++
+					updated.board[y + 1][x + 1]++
+
+				} else if games[i].board[y][x] == 3 {
+					updated.board[y][x] += 100
+					
+					updated.board[y][x - 1]++
+					updated.board[y][x + 1]++
+					updated.board[y - 1][x - 1]++
+					updated.board[y - 1][x]++
+					updated.board[y - 1][x + 1]++
+					updated.board[y + 1][x - 1]++
+					updated.board[y + 1][x]++
+					updated.board[y + 1][x + 1]++
+		
+				}
+			}
+		}
+		
+		games[i] = updated
+		// elapsed := time.Since(start)
+		//log.Printf("--> %s", elapsed)
+	}
+
+}
+
+func updateCanvases2() {
+
+	
+	for i := range games {
+
+		updated := Game{[][]uint8{}, games[i].width, games[i].height, games[i].cell}
+		for y := 0; y < updated.height; y++ {
+			updated.board = append(updated.board, []uint8{})
+			for x := 0; x < updated.width; x++ {
+				updated.board[y] = append(updated.board[y], 0)
+			}
+		}
 
 		// start := time.Now()
 		for y := 0; y < games[i].height; y++ {
@@ -116,8 +185,8 @@ func updateCanvases() {
 			}
 		}
 		games[i] = updated
-		// elapsed := time.Since(start)
-		// log.Printf("--> %s", elapsed)
+		//elapsed := time.Since(start)
+		//log.Printf("--> %s", elapsed)
 	}
 
 }
@@ -131,11 +200,10 @@ func renderCanvases() {
 		context.Set("fillStyle", backgroundColor)
 		context.Call("fillRect", 0, 0, games[i].width*games[i].cell, games[i].height*games[i].cell)
 
+		context.Set("fillStyle", color)
 		for y := 0; y < games[i].height; y++ {
 			for x := 0; x < games[i].width; x++ {
-				if games[i].board[x][y] > 0 {
-
-					context.Set("fillStyle", color)
+				if games[i].board[x][y] >= 100 {
 					context.Call("fillRect", x*games[i].cell, y*games[i].cell, games[i].cell, games[i].cell)
 				}
 			}
@@ -145,9 +213,9 @@ func renderCanvases() {
 
 func loop(this js.Value, args []js.Value) interface{} {
 
-	log.Println("AAA")
+	// log.Println("AAA")
 	updateCanvases()
-	//renderCanvases()
+	renderCanvases()
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
 	return js.Value{}
