@@ -160,11 +160,39 @@ func setColor(this js.Value, args []js.Value) interface{} {
 	return js.Value{}
 }
 
+func setBackgroundColor(this js.Value, args []js.Value) interface{} {
+	if len(args) > 0 && args[0].Type() == js.TypeString {
+		games[this.Get("id").String()].backgroundColor = args[0].String()
+	}
+	return js.Value{}
+}
+
+func setMinInterval(this js.Value, args []js.Value) interface{} {
+	return js.Value{} 
+}
+
 
 func resume(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = false
 	return js.Value{}
 }
+
+func clear(this js.Value, args []js.Value) interface{} {
+	return js.Value{} 
+}
+
+func spawn(this js.Value, args []js.Value) interface{} {
+	return js.Value{} 
+}
+
+func kill(this js.Value, args []js.Value) interface{} {
+	return js.Value{} 
+}
+
+func getCellSize(this js.Value, args []js.Value) interface{} {
+	return js.Value{} 
+}
+
 
 func loop(this js.Value, args []js.Value) interface{} {
 
