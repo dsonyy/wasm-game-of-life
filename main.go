@@ -147,6 +147,16 @@ func renderCanvases() {
 	}
 }
 
+func loop(this js.Value, args []js.Value) interface{} {
+
+	updateCanvases()
+	renderCanvases()
+
+	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
+	return js.Value{}
+}
+
+
 func jsStop(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = true
 	return js.Value{}
@@ -210,23 +220,43 @@ func jsSpawn(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-func kill(this js.Value, args []js.Value) interface{} {
-	return js.Value{} 
-}
-
-func getCellSize(this js.Value, args []js.Value) interface{} {
+func jsKill(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
 
-func loop(this js.Value, args []js.Value) interface{} {
-
-	updateCanvases()
-	renderCanvases()
-
-	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
-	return js.Value{}
+func jsGetWidthInPx(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].width * games[this.Get("id").String()].cell
 }
+
+func jsGetHeightInPx(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].height * games[this.Get("id").String()].cell
+}
+
+func jsGetWidthInCells(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].width
+}
+
+func jsGetHeightInCells(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].height
+}
+
+func jsGetColor(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].color
+}
+
+func jsGetBackgroundColor(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].backgroundColor
+}
+
+func jsGetCellSize(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].cell
+}
+
+func jsIsStopped(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].stopped
+}
+
 
 func main() {
 	c := make(chan struct{}, 0)
@@ -237,12 +267,25 @@ func main() {
 
 	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
 	for i := 0; i < canvases.Length(); i++ {
-		canvases.Index(i).Set("stop", js.FuncOf(jsStop))
-		canvases.Index(i).Set("resume", js.FuncOf(jsResume))
+
+		canvases.Index(i).Set("getWidthInPx", js.FuncOf(jsGetWidthInPx))
+		canvases.Index(i).Set("getHeightInPx", js.FuncOf(jsGetHeightInPx))
+		canvases.Index(i).Set("getWidthInCells", js.FuncOf(jsGetWidthInCells))
+		canvases.Index(i).Set("getHeightInCells", js.FuncOf(jsGetHeightInCells))
+		canvases.Index(i).Set("getColor", js.FuncOf(jsGetColor))
+		canvases.Index(i).Set("getBackgroundColor", js.FuncOf(jsGetBackgroundColor))
+		canvases.Index(i).Set("getCellSize", js.FuncOf(jsGetCellSize))
+		canvases.Index(i).Set("isStopped", js.FuncOf(jsIsStopped))
+
 		canvases.Index(i).Set("setColor", js.FuncOf(jsSetColor))
 		canvases.Index(i).Set("setBackgroundColor", js.FuncOf(jsSetBackgroundColor))
+
+		canvases.Index(i).Set("stop", js.FuncOf(jsStop))
+		canvases.Index(i).Set("resume", js.FuncOf(jsResume))
+
 		canvases.Index(i).Set("clear", js.FuncOf(jsClear))
 		canvases.Index(i).Set("spawn", js.FuncOf(jsSpawn))
+		canvases.Index(i).Set("kill", js.FuncOf(jsKill))		
 	}
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
