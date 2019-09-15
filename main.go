@@ -381,7 +381,7 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("get", js.FuncOf(jsGet))		
 	canvas.Set("getNeighbours", js.FuncOf(jsGetNeighbours))	
 
-	cell := 4
+	cell := 10
 	width := 2 + canvas.Get("width").Int() / cell
 	height := 2 + canvas.Get("height").Int() / cell
 	game := newGame(width, height, cell, "#eee", "#555")
