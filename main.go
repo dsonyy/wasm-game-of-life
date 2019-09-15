@@ -33,16 +33,43 @@ func initCanvases() {
 		height := 2 + canvases.Index(i).Get("height").Int() / cell
 
 		game := newGame(width, height, cell, "#eee", "#555")
-		for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
 			game.board = append(game.board, []uint8{})
-			for x := 0; x < width; x++ {
-				game.board[y] = append(game.board[y], 0)
+			for y := 0; y < height; y++ {
+				game.board[x] = append(game.board[x], 0)
 			}
 		}
 
 		games[canvases.Index(i).Get("id").String()] = &game
 	}
 }
+
+func birth(id string, x int, y int) {
+	games[id].board[x][y] += 100
+					
+	games[id].board[x][y - 1]++
+	games[id].board[x][y + 1]++
+	games[id].board[x - 1][y - 1]++
+	games[id].board[x - 1][y]++
+	games[id].board[x - 1][y + 1]++
+	games[id].board[x + 1][y - 1]++
+	games[id].board[x + 1][y]++
+	games[id].board[x + 1][y + 1]++
+}
+
+func kill(id string, x int, y int) {
+	games[id].board[x][y] -= 100
+					
+	games[id].board[x][y - 1]--
+	games[id].board[x][y + 1]--
+	games[id].board[x - 1][y - 1]--
+	games[id].board[x - 1][y]--
+	games[id].board[x - 1][y + 1]--
+	games[id].board[x + 1][y - 1]--
+	games[id].board[x + 1][y]--
+	games[id].board[x + 1][y + 1]--
+}
+
 
 func fillCanvases(percentage int) {
 	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
@@ -194,33 +221,39 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 		}
 	}
 
+	log.Println(games[id])
 	return js.Value{} 
 }
 
 func jsBirth(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
-	
-	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber && 
-	args[0].Int() >= 0 && args[0].Int() < games[id].width && args[1].Int() >= 0 && args[1].Int() < games[id].height && games[id].board[args[0].Int()][args[1].Int()] < 100 {
-		x := args[0].Int()
-		y := args[1].Int()
-		
-		games[id].board[x][y] += 100
 
-		games[id].board[y][x - 1]++
-		games[id].board[y][x + 1]++
-		games[id].board[y - 1][x - 1]++
-		games[id].board[y - 1][x]++
-		games[id].board[y - 1][x + 1]++
-		games[id].board[y + 1][x - 1]++
-		games[id].board[y + 1][x]++
-		games[id].board[y + 1][x + 1]++
+	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber {
+		x := args[0].Int() + 1
+		y := args[1].Int() + 1
+
+		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 &&
+		games[id].board[y][x] < 100 {
+			birth(id, x, y)
+		}
 	}
 
 	return js.Value{} 
 }
 
 func jsKill(this js.Value, args []js.Value) interface{} {
+	id := this.Get("id").String()
+
+	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber {
+		x := args[0].Int() + 1
+		y := args[1].Int() + 1
+
+		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 &&
+		games[id].board[y][x] >= 100 {
+			kill(id, x, y)
+		}
+	}
+
 	return js.Value{} 
 }
 
@@ -228,10 +261,10 @@ func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
 	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber {
-		x := args[0].Int()
-		y := args[1].Int()
+		x := args[0].Int() + 1
+		y := args[1].Int() + 1
 
-		if x >= 0 && y >= 0 && x < games[id].width && y < games[id].height {
+		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 {
 			if games[id].board[y][x] >= 100 {
 				return games[id].board[y][x] - 100
 			} else {
@@ -247,10 +280,10 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
 	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber {
-		x := args[0].Int()
-		y := args[1].Int()
+		x := args[0].Int() + 1
+		y := args[1].Int() + 1
 
-		if x >= 0 && y >= 0 && x < games[id].width && y < games[id].height {
+		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1{
 			if games[id].board[y][x] >= 100 {
 				return true
 			} else {
@@ -261,8 +294,6 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 
 	return js.Value{} 
 }
-
-
 
 func jsGetWidthInPx(this js.Value, args []js.Value) interface{} {
 	return (games[this.Get("id").String()].width - 2) * games[this.Get("id").String()].cell
