@@ -23,6 +23,7 @@ func newGame(width int, height int, cell int, color string, backgroundColor stri
 
 var games map[string]*Game
 
+// Initializes every canvas with data-conways selector.
 func initCanvases() {
 	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
 	games = make(map[string]*Game)
@@ -44,6 +45,7 @@ func initCanvases() {
 	}
 }
 
+// Creates alive cell with x, y coordinates in game[id]
 func birth(id string, x int, y int) {
 	games[id].board[x][y] += 100
 					
@@ -57,6 +59,7 @@ func birth(id string, x int, y int) {
 	games[id].board[x + 1][y + 1]++
 }
 
+// Kills cell with x, y coordinates in game[id]
 func kill(id string, x int, y int) {
 	games[id].board[x][y] -= 100
 					
@@ -69,7 +72,6 @@ func kill(id string, x int, y int) {
 	games[id].board[x + 1][y]--
 	games[id].board[x + 1][y + 1]--
 }
-
 
 func fillCanvases(percentage int) {
 	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
@@ -97,6 +99,7 @@ func fillCanvases(percentage int) {
 
 }
 
+// Updates every canvas with data-conways selector.
 func updateCanvases() {
 	for i := range games {
 
@@ -148,6 +151,7 @@ func updateCanvases() {
 
 }
 
+// Renders every canvas with data-conways selector.
 func renderCanvases() {
 	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
 
@@ -174,6 +178,7 @@ func renderCanvases() {
 	}
 }
 
+// Main game loop.
 func loop(this js.Value, args []js.Value) interface{} {
 
 	updateCanvases()
@@ -184,16 +189,19 @@ func loop(this js.Value, args []js.Value) interface{} {
 }
 
 
+// Stops game.
 func jsStop(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = true
 	return js.Value{}
 }
 
+// Resumes game.
 func jsResume(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = false
 	return js.Value{}
 }
 
+// Sets game cells color. Recieves string argument with color.
 func jsSetColor(this js.Value, args []js.Value) interface{} {
 	if len(args) > 0 && args[0].Type() == js.TypeString {
 		games[this.Get("id").String()].color = args[0].String()
@@ -201,6 +209,7 @@ func jsSetColor(this js.Value, args []js.Value) interface{} {
 	return js.Value{}
 }
 
+// Sets game backgorund color. Recieves string argument with color.
 func jsSetBackgroundColor(this js.Value, args []js.Value) interface{} {
 	if len(args) > 0 && args[0].Type() == js.TypeString {
 		games[this.Get("id").String()].backgroundColor = args[0].String()
@@ -212,6 +221,7 @@ func jsSetMinInterval(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// Fills game board with killed cells
 func jsClear(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -225,6 +235,7 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// Creates alive cell. Recieves X and Y coordinates of cell.
 func jsBirth(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -241,6 +252,7 @@ func jsBirth(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// Kills cell. Recieves X and Y coordinates of cell.
 func jsKill(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -257,6 +269,7 @@ func jsKill(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// Returns number of cell neighbours. Recieves X and Y coordinates of cell.
 func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -276,6 +289,7 @@ func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// Returns true if cell is alive, otherwise returns false. Recieves X and Y coordinates of cell.
 func jsGet(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -295,34 +309,42 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// Returns used width of game board in pixels.
 func jsGetWidthInPx(this js.Value, args []js.Value) interface{} {
 	return (games[this.Get("id").String()].width - 2) * games[this.Get("id").String()].cell
 }
 
+// Returns used height of game board in pixels.
 func jsGetHeightInPx(this js.Value, args []js.Value) interface{} {
 	return (games[this.Get("id").String()].height - 2) * games[this.Get("id").String()].cell
 }
 
+// Returns width of game board in cells.
 func jsGetWidthInCells(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].width - 2
 }
 
+// Returns height of game board in cells.
 func jsGetHeightInCells(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].height - 2
 }
 
+// Returns game cells color.
 func jsGetColor(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].color
 }
 
+// Returns game background color.
 func jsGetBackgroundColor(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].backgroundColor
 }
 
+// Returns edge size of single game cell in pixels.
 func jsGetCellSize(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].cell
 }
 
+// Returns true if game is stopped. Otherwise returns false.
 func jsIsStopped(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].stopped
 }
