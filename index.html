@@ -26,21 +26,23 @@
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
 
-			new Promise(function(resolve, reject) {
+			let asdf = new Promise(function(resolve, reject) {
 				const go = new Go();
 				WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
 					go.run(result.instance);
 				});
-				setTimeout(resolve, 500);
+				setTimeout(resolve, 1000);
 			}).then(function() {
 				startGameOfLife("root")
 				canvas.setBackgroundColor("#006")
 				canvas.setColor("#dd0")
 				canvas.noise(70)
-				
+
 			}).catch(function() {
 
 			});
+
+
 		</script>
 	</body>
 </html>
