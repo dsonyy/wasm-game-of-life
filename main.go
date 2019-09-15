@@ -36,7 +36,7 @@ func initCanvases() {
 	games = make(map[string]*Game)
 
 	for i := 0; i < canvases.Length(); i++ {
-		cell := 3
+		cell := 4
 		width := 2 + canvases.Index(i).Get("width").Int() / cell
 		height := 2 + canvases.Index(i).Get("height").Int() / cell
 
@@ -139,13 +139,10 @@ func updateCanvases() {
 
 // Renders every canvas with data-conways selector.
 func renderCanvases() {
-	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
-
-	for i := 0; i < canvases.Length(); i++ {
-		id := canvases.Index(i).Get("id").String()
+	for id := range games {
 		// start := time.Now()
 
-		context := canvases.Index(i).Call("getContext", "2d")
+		context := js.Global().Get("document").Call("getElementById", id).Call("getContext", "2d")
 
 		context.Set("fillStyle", games[id].backgroundColor)
 		context.Call("fillRect", 0, 0, games[id].width*games[id].cell, games[id].height*games[id].cell)
@@ -218,6 +215,27 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 	}
 
 	log.Println(games[id])
+	return js.Value{} 
+}
+
+// Fills game board with random noice cells. Recieves number of alive cells probability.
+func jsNoise(this js.Value, args []js.Value) interface{} {
+	id := this.Get("id").String()
+
+	percentage := 50
+
+	if len(args) >= 1 && args[0].Type() == js.TypeNumber {
+		percentage = args[0].Int()
+	}
+
+	for y := 1; y < games[id].height - 1; y++ {
+		for x := 1; x < games[id].width - 1; x++ {
+			if (percentage < rand.Intn(100)) {
+				birth(id, x, y)
+			}
+		}
+	}
+
 	return js.Value{} 
 }
 
@@ -335,13 +353,51 @@ func jsIsStopped(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].stopped
 }
 
+func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
+	if len(args) == 0 && args[0].Type() != js.TypeString {
+		return js.Value{}
+	}
+
+	id := args[0].String()
+
+	canvas := js.Global().Get("document").Call("getElementById", id)
+	canvas.Set("noise", js.FuncOf(jsNoise))
+
+	canvas.Set("getWidthInPx", js.FuncOf(jsGetWidthInPx))
+	canvas.Set("getHeightInPx", js.FuncOf(jsGetHeightInPx))
+	canvas.Set("getWidthInCells", js.FuncOf(jsGetWidthInCells))
+	canvas.Set("getHeightInCells", js.FuncOf(jsGetHeightInCells))
+	canvas.Set("getColor", js.FuncOf(jsGetColor))
+	canvas.Set("getBackgroundColor", js.FuncOf(jsGetBackgroundColor))
+	canvas.Set("getCellSize", js.FuncOf(jsGetCellSize))
+	canvas.Set("isStopped", js.FuncOf(jsIsStopped))
+	canvas.Set("setColor", js.FuncOf(jsSetColor))
+	canvas.Set("setBackgroundColor", js.FuncOf(jsSetBackgroundColor))
+	canvas.Set("stop", js.FuncOf(jsStop))
+	canvas.Set("resume", js.FuncOf(jsResume))
+	canvas.Set("clear", js.FuncOf(jsClear))
+	canvas.Set("birth", js.FuncOf(jsBirth))
+	canvas.Set("kill", js.FuncOf(jsKill))		
+	canvas.Set("get", js.FuncOf(jsGet))		
+	canvas.Set("getNeighbours", js.FuncOf(jsGetNeighbours))	
+
+	cell := 4
+	width := 2 + canvas.Get("width").Int() / cell
+	height := 2 + canvas.Get("height").Int() / cell
+	game := newGame(width, height, cell, "#eee", "#555")
+	games[id] = &game
+
+	log.Println(games[id].board)
+
+	return canvas
+}
+
 
 func main() {
 	c := make(chan struct{}, 0)
-	log.Println("Hello, WebAssembly!")
+	games = make(map[string]*Game)
 
-	initCanvases()
-	fillCanvases(70)
+	js.Global().Set("startGameOfLife", js.FuncOf(jsStartGameOfLife))
 
 	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
 	for i := 0; i < canvases.Length(); i++ {

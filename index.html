@@ -5,7 +5,7 @@
 		<style>
 			html, body {
 				height: 100%;
-				overflow: hidden;
+				/* overflow: hidden; */
 				margin: 0;
 			}
 
@@ -17,22 +17,27 @@
 	</head>
 	<body>
 		</style>
-		<canvas id="root" data-conways width="100px" height="999px" style="background-color: green"></canvas>
+		<canvas id="root" data-conways width="100px" height="999px" style="background-color: #006"></canvas>
+		<!-- <canvas id="root" data-conways width="10px" height="100px" style="background-color: blue"></canvas> -->
 		<!-- <canvas id="asdf" data-conways width="100px" height="100px" style="background-color: blue"></canvas> -->
 
 		<script>
-			function loop() {
-				iterate();
-			}
+			let canvas = document.getElementById("root");
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
 
 			new Promise(function(resolve, reject) {
 				const go = new Go();
 				WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
 					go.run(result.instance);
 				});
-				setTimeout(resolve, 2000);
+				setTimeout(resolve, 500);
 			}).then(function() {
-
+				startGameOfLife("root")
+				canvas.setBackgroundColor("#006")
+				canvas.setColor("#dd0")
+				canvas.noise(70)
+				
 			}).catch(function() {
 
 			});
