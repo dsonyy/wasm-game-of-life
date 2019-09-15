@@ -18,7 +18,14 @@ type Game struct {
 }
 
 func newGame(width int, height int, cell int, color string, backgroundColor string) Game {
-	return Game{[][]uint8{}, width, height, cell, false, color, backgroundColor}
+	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor}
+	for x := 0; x < game.width; x++ {
+		game.board = append(game.board, []uint8{})
+		for y := 0; y < game.height; y++ {
+			game.board[x] = append(game.board[x], 0)
+		}
+	}
+	return game
 }
 
 var games map[string]*Game
@@ -82,16 +89,15 @@ func fillCanvases(percentage int) {
 		for y := 1; y < games[id].height - 1; y++ {
 			for x := 1; x < games[id].width - 1; x++ {
 				if (percentage < rand.Intn(100)) {
-					games[id].board[y][x] += 100
-					
-					games[id].board[y][x - 1]++
-					games[id].board[y][x + 1]++
-					games[id].board[y - 1][x - 1]++
-					games[id].board[y - 1][x]++
-					games[id].board[y - 1][x + 1]++
-					games[id].board[y + 1][x - 1]++
-					games[id].board[y + 1][x]++
-					games[id].board[y + 1][x + 1]++
+					games[id].board[x][y] += 100
+					games[id].board[x][y - 1]++
+					games[id].board[x][y + 1]++
+					games[id].board[x - 1][y - 1]++
+					games[id].board[x - 1][y]++
+					games[id].board[x - 1][y + 1]++
+					games[id].board[x + 1][y - 1]++
+					games[id].board[x + 1][y]++
+					games[id].board[x + 1][y + 1]++
 				}
 			}
 		}
@@ -108,45 +114,25 @@ func updateCanvases() {
 		}
 
 		updated := newGame(games[i].width, games[i].height, games[i].cell, games[i].color, games[i].backgroundColor)
-		for y := 0; y < updated.height; y++ {
-			updated.board = append(updated.board, []uint8{})
-			for x := 0; x < updated.width; x++ {
-				updated.board[y] = append(updated.board[y], 0)
-			}
-		}
-
 
 		for y := 1; y < games[i].height - 1; y++ {
 			for x := 1; x < games[i].width - 1; x++ { 
-				if games[i].board[y][x] == 103 || games[i].board[y][x] == 102{
-					updated.board[y][x] += 100
+				if games[i].board[x][y] == 103 || games[i].board[x][y] == 102 || games[i].board[x][y] == 3 {
+					updated.board[x][y] += 100
 					
-					updated.board[y][x - 1]++
-					updated.board[y][x + 1]++
-					updated.board[y - 1][x - 1]++
-					updated.board[y - 1][x]++
-					updated.board[y - 1][x + 1]++
-					updated.board[y + 1][x - 1]++
-					updated.board[y + 1][x]++
-					updated.board[y + 1][x + 1]++
-
-				} else if games[i].board[y][x] == 3 {
-					updated.board[y][x] += 100
-					
-					updated.board[y][x - 1]++
-					updated.board[y][x + 1]++
-					updated.board[y - 1][x - 1]++
-					updated.board[y - 1][x]++
-					updated.board[y - 1][x + 1]++
-					updated.board[y + 1][x - 1]++
-					updated.board[y + 1][x]++
-					updated.board[y + 1][x + 1]++	
+					updated.board[x][y - 1]++
+					updated.board[x][y + 1]++
+					updated.board[x - 1][y - 1]++
+					updated.board[x - 1][y]++
+					updated.board[x - 1][y + 1]++
+					updated.board[x + 1][y - 1]++
+					updated.board[x + 1][y]++
+					updated.board[x + 1][y + 1]++
 				}
 			}
 		}
 		
 		games[i] = &updated
-
 	}
 
 }
