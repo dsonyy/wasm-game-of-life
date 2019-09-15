@@ -29,8 +29,8 @@ func initCanvases() {
 
 	for i := 0; i < canvases.Length(); i++ {
 		cell := 3
-		width := canvases.Index(i).Get("width").Int() / cell
-		height := canvases.Index(i).Get("height").Int() / cell
+		width := 2 + canvases.Index(i).Get("width").Int() / cell
+		height := 2 + canvases.Index(i).Get("height").Int() / cell
 
 		game := newGame(width, height, cell, "#eee", "#555")
 		for y := 0; y < height; y++ {
@@ -134,10 +134,10 @@ func renderCanvases() {
 		context.Call("fillRect", 0, 0, games[id].width*games[id].cell, games[id].height*games[id].cell)
 
 		context.Set("fillStyle", games[id].color)
-		for y := 0; y < games[id].height; y++ {
-			for x := 0; x < games[id].width; x++ {
+		for y := 1; y < games[id].height - 1; y++ {
+			for x := 1; x < games[id].width - 1; x++ {
 				if games[id].board[x][y] >= 100 {
-					context.Call("fillRect", x*games[id].cell, y*games[id].cell, games[id].cell, games[id].cell)	 			
+					context.Call("fillRect", (x - 1)*games[id].cell, (y - 1)*games[id].cell, games[id].cell, games[id].cell)	 			
 				}
 			}
 		}
@@ -197,7 +197,7 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-func jsSpawn(this js.Value, args []js.Value) interface{} {
+func jsBirth(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 	
 	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber && 
@@ -224,21 +224,60 @@ func jsKill(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
+	id := this.Get("id").String()
+
+	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber {
+		x := args[0].Int()
+		y := args[1].Int()
+
+		if x >= 0 && y >= 0 && x < games[id].width && y < games[id].height {
+			if games[id].board[y][x] >= 100 {
+				return games[id].board[y][x] - 100
+			} else {
+				return games[id].board[y][x]
+			}
+		}
+	}
+
+	return js.Value{} 
+}
+
+func jsGet(this js.Value, args []js.Value) interface{} {
+	id := this.Get("id").String()
+
+	if len(args) >= 2 && args[0].Type() == js.TypeNumber && args[1].Type() == js.TypeNumber {
+		x := args[0].Int()
+		y := args[1].Int()
+
+		if x >= 0 && y >= 0 && x < games[id].width && y < games[id].height {
+			if games[id].board[y][x] >= 100 {
+				return true
+			} else {
+				return false
+			}
+		}
+	}
+
+	return js.Value{} 
+}
+
+
 
 func jsGetWidthInPx(this js.Value, args []js.Value) interface{} {
-	return games[this.Get("id").String()].width * games[this.Get("id").String()].cell
+	return (games[this.Get("id").String()].width - 2) * games[this.Get("id").String()].cell
 }
 
 func jsGetHeightInPx(this js.Value, args []js.Value) interface{} {
-	return games[this.Get("id").String()].height * games[this.Get("id").String()].cell
+	return (games[this.Get("id").String()].height - 2) * games[this.Get("id").String()].cell
 }
 
 func jsGetWidthInCells(this js.Value, args []js.Value) interface{} {
-	return games[this.Get("id").String()].width
+	return games[this.Get("id").String()].width - 2
 }
 
 func jsGetHeightInCells(this js.Value, args []js.Value) interface{} {
-	return games[this.Get("id").String()].height
+	return games[this.Get("id").String()].height - 2
 }
 
 func jsGetColor(this js.Value, args []js.Value) interface{} {
@@ -284,8 +323,10 @@ func main() {
 		canvases.Index(i).Set("resume", js.FuncOf(jsResume))
 
 		canvases.Index(i).Set("clear", js.FuncOf(jsClear))
-		canvases.Index(i).Set("spawn", js.FuncOf(jsSpawn))
+		canvases.Index(i).Set("birth", js.FuncOf(jsBirth))
 		canvases.Index(i).Set("kill", js.FuncOf(jsKill))		
+		canvases.Index(i).Set("get", js.FuncOf(jsGet))		
+		canvases.Index(i).Set("getNeighbours", js.FuncOf(jsGetNeighbours))		
 	}
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
