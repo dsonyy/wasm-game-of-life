@@ -4,9 +4,9 @@ import (
 	"log"
 	"math/rand"
 	"syscall/js"
-	// "time"
 )
 
+// Struct representing a single instance of Game of Life.
 type Game struct {
 	board  [][]uint8
 	width  int
@@ -17,6 +17,7 @@ type Game struct {
 	backgroundColor string
 }
 
+// newGame is a constructor for Game object.
 func newGame(width int, height int, cell int, color string, backgroundColor string) Game {
 	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor}
 	for x := 0; x < game.width; x++ {
@@ -28,31 +29,10 @@ func newGame(width int, height int, cell int, color string, backgroundColor stri
 	return game
 }
 
+// games is a dictionary containing every game data. Keys are ids of canvases. Values are Game objects.
 var games map[string]*Game
 
-// Initializes every canvas with data-conways selector.
-func initCanvases() {
-	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
-	games = make(map[string]*Game)
-
-	for i := 0; i < canvases.Length(); i++ {
-		cell := 4
-		width := 2 + canvases.Index(i).Get("width").Int() / cell
-		height := 2 + canvases.Index(i).Get("height").Int() / cell
-
-		game := newGame(width, height, cell, "#eee", "#555")
-		for x := 0; x < width; x++ {
-			game.board = append(game.board, []uint8{})
-			for y := 0; y < height; y++ {
-				game.board[x] = append(game.board[x], 0)
-			}
-		}
-
-		games[canvases.Index(i).Get("id").String()] = &game
-	}
-}
-
-// Creates alive cell with x, y coordinates in game[id]
+// birth sets the cell with coordinates (x, y) of the game with given id as active.
 func birth(id string, x int, y int) {
 	games[id].board[x][y] += 100
 					
@@ -66,7 +46,7 @@ func birth(id string, x int, y int) {
 	games[id].board[x + 1][y + 1]++
 }
 
-// Kills cell with x, y coordinates in game[id]
+// kill sets the cell with coordinates (x, y) of the game with given id as inactive.
 func kill(id string, x int, y int) {
 	games[id].board[x][y] -= 100
 					
@@ -80,32 +60,7 @@ func kill(id string, x int, y int) {
 	games[id].board[x + 1][y + 1]--
 }
 
-func fillCanvases(percentage int) {
-	canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
-
-	for i := 0; i < canvases.Length(); i++ {
-		id := canvases.Index(i).Get("id").String()
-
-		for y := 1; y < games[id].height - 1; y++ {
-			for x := 1; x < games[id].width - 1; x++ {
-				if (percentage < rand.Intn(100)) {
-					games[id].board[x][y] += 100
-					games[id].board[x][y - 1]++
-					games[id].board[x][y + 1]++
-					games[id].board[x - 1][y - 1]++
-					games[id].board[x - 1][y]++
-					games[id].board[x - 1][y + 1]++
-					games[id].board[x + 1][y - 1]++
-					games[id].board[x + 1][y]++
-					games[id].board[x + 1][y + 1]++
-				}
-			}
-		}
-	}
-
-}
-
-// Updates every canvas with data-conways selector.
+// updateCanvases updates every game.
 func updateCanvases() {
 	for i := range games {
 
@@ -137,7 +92,7 @@ func updateCanvases() {
 
 }
 
-// Renders every canvas with data-conways selector.
+// renderCanvases renders every game to proper canvas.
 func renderCanvases() {
 	for id := range games {
 		// start := time.Now()
@@ -161,8 +116,9 @@ func renderCanvases() {
 	}
 }
 
-// Main game loop.
-func loop(this js.Value, args []js.Value) interface{} {
+// jsStop is a javascript function but cannot be called directly from javascript.
+// Updates and renders every game. Calls itself after that.
+func jsLoop(this js.Value, args []js.Value) interface{} {
 
 	updateCanvases()
 	renderCanvases()
@@ -171,20 +127,23 @@ func loop(this js.Value, args []js.Value) interface{} {
 	return js.Value{}
 }
 
-
-// Stops game.
+// jsStop is a function called from javascript on an initialized canvas element.
+// Stops updating the game.
 func jsStop(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = true
 	return js.Value{}
 }
 
-// Resumes game.
+// jsResume is a function called from javascript on an initialized canvas element.
+// Resumes updating the game.
 func jsResume(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = false
 	return js.Value{}
 }
 
-// Sets game cells color. Recieves string argument with color.
+// jsSetColor is a function called from javascript on an initialized canvas element.
+// Sets the game cells color.
+// As arg[0] it recieves a valid CSS color value (javascript string).
 func jsSetColor(this js.Value, args []js.Value) interface{} {
 	if len(args) > 0 && args[0].Type() == js.TypeString {
 		games[this.Get("id").String()].color = args[0].String()
@@ -192,7 +151,9 @@ func jsSetColor(this js.Value, args []js.Value) interface{} {
 	return js.Value{}
 }
 
-// Sets game backgorund color. Recieves string argument with color.
+// jsSetBackgroundColor is a function called from javascript on an initialized canvas element.
+// Sets the game backgorund color.
+// As arg[0] it recieves a valid CSS color value (javascript string).
 func jsSetBackgroundColor(this js.Value, args []js.Value) interface{} {
 	if game, exist := games[this.Get("id").String()] ; exist && len(args) > 0 && args[0].Type() == js.TypeString {
 		game.backgroundColor = args[0].String()
@@ -200,11 +161,15 @@ func jsSetBackgroundColor(this js.Value, args []js.Value) interface{} {
 	return js.Value{}
 }
 
+// jsSetMinInterval is a function called from javascript on an initialized canvas element.
+// Sets the minimal time interval between two calls of rendering funcion 
+// (note that if the game board was big, the time to calculate and render would be longer that this interval) 
 func jsSetMinInterval(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-// Fills game board with killed cells
+// jsClear is a function called from javascript on an initialized canvas element.
+// Fills the game board with inactive cells
 func jsClear(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -218,7 +183,6 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-// Fills game board with random noice cells. Recieves number of alive cells probability.
 func jsNoise(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -241,7 +205,11 @@ func jsNoise(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-// Creates alive cell. Recieves X and Y coordinates of cell.
+// jsBirth is a function called from javascript on an initialized canvas element.
+// Sets the cell as active.
+// As arg[0] it recieves x position in cells of the canvas (javascript number).
+// As arg[1] it recieves y position in cells of the canvas (javascript number).
+// Returns true if the given cell exist. Otherwise returns javascript undefined.
 func jsBirth(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -252,13 +220,18 @@ func jsBirth(this js.Value, args []js.Value) interface{} {
 		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 &&
 		games[id].board[y][x] < 100 {
 			birth(id, x, y)
+			return true
 		}
 	}
 
 	return js.Value{} 
 }
 
-// Kills cell. Recieves X and Y coordinates of cell.
+// jsKill is a function called from javascript on an initialized canvas element.
+// Sets the cell as inactive.
+// As arg[0] it recieves x position in cells of the canvas (javascript number).
+// As arg[1] it recieves y position in cells of the canvas (javascript number).
+// Returns true if the given cell exist. Otherwise returns javascript undefined.
 func jsKill(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -269,13 +242,17 @@ func jsKill(this js.Value, args []js.Value) interface{} {
 		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 &&
 		games[id].board[y][x] >= 100 {
 			kill(id, x, y)
+			return true
 		}
 	}
 
 	return js.Value{} 
 }
 
-// Returns number of cell neighbours. Recieves X and Y coordinates of cell.
+// jsGetNeighbours is a function called from javascript on an initialized canvas element.
+// As arg[0] it recieves x position in cells of the canvas (javascript number).
+// As arg[1] it recieves y position in cells of the canvas (javascript number).
+// Returns number of neighbours of the given cell. If fails, returns undefined.
 func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -295,7 +272,10 @@ func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-// Returns true if cell is alive, otherwise returns false. Recieves X and Y coordinates of cell.
+// jsGet is a function called from javascript on an initialized canvas element.
+// As arg[0] it recieves x position in cells of the canvas (javascript number).
+// As arg[1] it recieves y position in cells of the canvas (javascript number).
+// Returns true if the given cell is alive, otherwise returns false. If fails, returns undefined.
 func jsGet(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
@@ -315,46 +295,57 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-// Returns used width of game board in pixels.
+// jsGetWidthInPx is a function called from javascript on an initialized canvas element. 
+// Returns used width of game board in pixels (note that it is not always equals to the width of the canvas).
 func jsGetWidthInPx(this js.Value, args []js.Value) interface{} {
 	return (games[this.Get("id").String()].width - 2) * games[this.Get("id").String()].cell
 }
 
-// Returns used height of game board in pixels.
+// jsGetHeightInPx is a function called from javascript on an initialized canvas element. 
+// Returns used height of game board in pixels (note that it is not always equals to the height of the canvas).
 func jsGetHeightInPx(this js.Value, args []js.Value) interface{} {
 	return (games[this.Get("id").String()].height - 2) * games[this.Get("id").String()].cell
 }
 
-// Returns width of game board in cells.
+// jsGetWidthInCells is a function called from javascript on an initialized canvas element. 
+// Returns width of the game board in cells.
 func jsGetWidthInCells(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].width - 2
 }
 
-// Returns height of game board in cells.
+// jsGetHeightInCells is a function called from javascript on an initialized canvas element. 
+// Returns height of the game board in cells.
 func jsGetHeightInCells(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].height - 2
 }
 
-// Returns game cells color.
+// jsGetColor is a function called from javascript on an initialized canvas element. 
+// Returns the game cells color.
 func jsGetColor(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].color
 }
 
-// Returns game background color.
+// jsGetBackgroundColor is a function called from javascript on an initialized canvas element. 
+// Returns the game background color.
 func jsGetBackgroundColor(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].backgroundColor
 }
 
-// Returns edge size of single game cell in pixels.
+// jsGetCellSize is a function called from javascript on an initialized canvas element. 
+// Returns the edge size of a single game cell in pixels.
 func jsGetCellSize(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].cell
 }
 
-// Returns true if game is stopped. Otherwise returns false.
+// jsIsStopped is a function called from javascript on an initialized canvas element. 
+// Returns true if the game is stopped. Otherwise returns false.
 func jsIsStopped(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].stopped
 }
 
+// jsStartGameOfLife is a function called from javascript. Initializes Game of Life for the canvas with given id.
+// As arg[0] it recieves id the canvas (javascript string).
+// Returns javascript undefined if cannot initialize canvas. Otherwise returns initialized canvas.
 func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	if len(args) == 0 && args[0].Type() != js.TypeString {
 		return js.Value{}
@@ -394,19 +385,17 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	game := newGame(width, height, cell, "#eee", "#555")
 	games[id] = &game
 
-	log.Println(games[id].board)
-
 	return canvas
 }
 
-
+// main is called when the wasm code starts.
 func main() {
 	c := make(chan struct{}, 0)
 	games = make(map[string]*Game)
 
 	js.Global().Set("startGameOfLife", js.FuncOf(jsStartGameOfLife))
 
-	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
+	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(jsLoop))
 
 	<-c
 }
