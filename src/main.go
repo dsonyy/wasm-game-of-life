@@ -364,7 +364,7 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 
 	canvas := js.Global().Get("document").Call("getElementById", id)
 
-	if canvas.Type() == js.TypeNull {
+	if canvas.Type() != js.TypeObject {
 		return js.Value{}
 	}
 
@@ -405,31 +405,6 @@ func main() {
 	games = make(map[string]*Game)
 
 	js.Global().Set("startGameOfLife", js.FuncOf(jsStartGameOfLife))
-
-	// canvases := js.Global().Get("document").Call("querySelectorAll", "[data-conways]")
-	// for i := 0; i < canvases.Length(); i++ {
-
-	// 	canvases.Index(i).Set("getWidthInPx", js.FuncOf(jsGetWidthInPx))
-	// 	canvases.Index(i).Set("getHeightInPx", js.FuncOf(jsGetHeightInPx))
-	// 	canvases.Index(i).Set("getWidthInCells", js.FuncOf(jsGetWidthInCells))
-	// 	canvases.Index(i).Set("getHeightInCells", js.FuncOf(jsGetHeightInCells))
-	// 	canvases.Index(i).Set("getColor", js.FuncOf(jsGetColor))
-	// 	canvases.Index(i).Set("getBackgroundColor", js.FuncOf(jsGetBackgroundColor))
-	// 	canvases.Index(i).Set("getCellSize", js.FuncOf(jsGetCellSize))
-	// 	canvases.Index(i).Set("isStopped", js.FuncOf(jsIsStopped))
-
-	// 	canvases.Index(i).Set("setColor", js.FuncOf(jsSetColor))
-	// 	canvases.Index(i).Set("setBackgroundColor", js.FuncOf(jsSetBackgroundColor))
-
-	// 	canvases.Index(i).Set("stop", js.FuncOf(jsStop))
-	// 	canvases.Index(i).Set("resume", js.FuncOf(jsResume))
-
-	// 	canvases.Index(i).Set("clear", js.FuncOf(jsClear))
-	// 	canvases.Index(i).Set("birth", js.FuncOf(jsBirth))
-	// 	canvases.Index(i).Set("kill", js.FuncOf(jsKill))		
-	// 	canvases.Index(i).Set("get", js.FuncOf(jsGet))		
-	// 	canvases.Index(i).Set("getNeighbours", js.FuncOf(jsGetNeighbours))		
-	// }
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(loop))
 
