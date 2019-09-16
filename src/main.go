@@ -345,7 +345,7 @@ func jsIsStopped(this js.Value, args []js.Value) interface{} {
 
 // jsStartGameOfLife is a function called from javascript. Initializes Game of Life for the canvas with given id.
 // As arg[0] it recieves id the canvas (javascript string).
-// Returns javascript undefined if cannot initialize canvas. Otherwise returns initialized canvas.
+// Returns javascript undefined if cannot initialize the canvas. Otherwise returns the initialized canvas.
 func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	if len(args) == 0 && args[0].Type() != js.TypeString {
 		return js.Value{}
@@ -387,6 +387,14 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 
 	return canvas
 }
+
+// jsEndGameOfLife is a function called from javascript. Finishes and cleans up Game of Life for the canvas with given id.
+// As arg[0] it recieves id the canvas (javascript string).
+// Returns javascript undefined if cannot finish the canvas. Otherwise returns finished canvas.
+func jsEndGameOfLife(this js.Value, args []js.Value) interface{} {
+	return js.Value{}
+}
+
 
 // main is called when the wasm code starts.
 func main() {
