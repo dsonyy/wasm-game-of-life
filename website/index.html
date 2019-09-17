@@ -18,9 +18,22 @@
 	<body>
 		</style>
 		<canvas id="root" width="999px" height="999px" style="background-color: #006"></canvas>
-		<canvas id="asdf" width="300px" height="300px" style="background-color: blue"></canvas>
+		<canvas id="asdf" width="999px" height="999px" style="background-color: blue"></canvas>
 
 		<script>
+			function initCanvases() {
+				
+				let c1 = startGameOfLife("root", 2)
+				c1.setBackgroundColor("#006")
+				c1.setColor("#dd0")
+				c1.noise(70)
+
+				let c2 = startGameOfLife("asdf", 2)
+				c2.setBackgroundColor("#060")
+				c2.setColor("#dd0")
+				c2.noise(70)
+			}
+
 			let canvas = document.getElementById("root");
 
 			// canvas.width = window.innerWidth;
@@ -32,21 +45,7 @@
 					go.run(result.instance);
 				});
 				setTimeout(resolve, 1000);
-			}).then(function() {
-				startGameOfLife("root", 2)
-				canvas.setBackgroundColor("#006")
-				canvas.setColor("#dd0")
-				canvas.noise(70)
-
-				let asdf = startGameOfLife("asdf", 0)
-				asdf.setBackgroundColor("#060")
-				asdf.setColor("#dd0")
-				asdf.noise(70)
-
-
-			}).catch(function() {
-
-			});
+			}).then(initCanvases).catch(function() {});
 
 
 		</script>

@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"syscall/js"
+	"time"
 )
 
 // Struct representing a single instance of Game of Life.
@@ -15,11 +16,13 @@ type Game struct {
 	stopped bool
 	color string
 	backgroundColor string
+	interval time.Duration
+	nextRefresh time.Time 
 }
 
 // newGame is a constructor for Game object.
 func newGame(width int, height int, cell int, color string, backgroundColor string) Game {
-	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor}
+	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor, 0, time.Now()}
 	for x := 0; x < game.width; x++ {
 		game.board = append(game.board, []uint8{})
 		for y := 0; y < game.height; y++ {
@@ -95,7 +98,6 @@ func updateCanvases() {
 // renderCanvases renders every game to proper canvas.
 func renderCanvases() {
 	for id := range games {
-		// start := time.Now()
 
 		context := js.Global().Get("document").Call("getElementById", id).Call("getContext", "2d")
 
@@ -110,9 +112,6 @@ func renderCanvases() {
 				}
 			}
 		}
-
-		// elapsed := time.Since(start)
-		// log.Printf("--> %s", elapsed)
 	}
 }
 
@@ -162,9 +161,21 @@ func jsSetBackgroundColor(this js.Value, args []js.Value) interface{} {
 }
 
 // jsSetMinInterval is a function called from javascript on an initialized canvas element.
-// Sets the minimal time interval between two calls of rendering funcion 
-// (note that if the game board was big, the time to calculate and render would be longer that this interval) 
+// Sets the minimum interval between two calls of rendering funcion in milliseconds.
+// (note that if the game board was big, the time to calculate and render would be longer that this interval)
+// As arg[0] it recieves minimal interval in ms (javascript number).
 func jsSetMinInterval(this js.Value, args []js.Value) interface{} {
+	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeString) {
+		return js.Value{}
+	}
+
+	id := this.Get("id").String()
+	interval := 0
+	if args[0].Int() > 0 {
+		interval = args[0].Int()
+	}
+	games[id].interval = time.Duration(interval * 1000000)
+
 	return js.Value{} 
 }
 
@@ -295,6 +306,13 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
+// jsGetMinInterval is a function called from javascript on an initialized canvas element.
+// Returns the minimum interval between two calls of rendering funcion in milliseconds.
+// (note that if the game board was big, the time to calculate and render would be longer that this interval)
+func jsGetMinInterval(this js.Value, args []js.Value) interface{} {
+	return games[this.Get("id").String()].interval * 1000000
+}
+
 // jsGetWidthInPx is a function called from javascript on an initialized canvas element. 
 // Returns used width of game board in pixels (note that it is not always equals to the width of the canvas).
 func jsGetWidthInPx(this js.Value, args []js.Value) interface{} {
@@ -348,7 +366,7 @@ func jsIsStopped(this js.Value, args []js.Value) interface{} {
 // As optional arg[1] it recieves game cell size in pixels (javascript number).
 // Returns javascript undefined if cannot initialize the canvas. Otherwise returns the initialized canvas.
 func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
-	if len(args) == 0 && args[0].Type() != js.TypeString {
+	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeString){
 		return js.Value{}
 	}
 
@@ -369,9 +387,11 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("getColor", js.FuncOf(jsGetColor))
 	canvas.Set("getBackgroundColor", js.FuncOf(jsGetBackgroundColor))
 	canvas.Set("getCellSize", js.FuncOf(jsGetCellSize))
+	canvas.Set("getMinInterval", js.FuncOf(jsGetMinInterval))
 	canvas.Set("isStopped", js.FuncOf(jsIsStopped))
 	canvas.Set("setColor", js.FuncOf(jsSetColor))
 	canvas.Set("setBackgroundColor", js.FuncOf(jsSetBackgroundColor))
+	canvas.Set("setMinInterval", js.FuncOf(jsSetMinInterval))
 	canvas.Set("stop", js.FuncOf(jsStop))
 	canvas.Set("resume", js.FuncOf(jsResume))
 	canvas.Set("clear", js.FuncOf(jsClear))
