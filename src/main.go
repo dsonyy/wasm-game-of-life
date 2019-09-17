@@ -18,11 +18,12 @@ type Game struct {
 	backgroundColor string
 	interval time.Duration
 	nextRefresh time.Time 
+	toRender bool
 }
 
 // newGame is a constructor for Game object.
 func newGame(width int, height int, cell int, color string, backgroundColor string) Game {
-	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor, 0, time.Now()}
+	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor, 0, time.Now(), false}
 	for x := 0; x < game.width; x++ {
 		game.board = append(game.board, []uint8{})
 		for y := 0; y < game.height; y++ {
@@ -63,64 +64,64 @@ func kill(id string, x int, y int) {
 	games[id].board[x + 1][y + 1]--
 }
 
-// updateCanvases updates every game.
-func updateCanvases() {
-	for i := range games {
+// updates the game board with given id.
+func update(id string) {
+	updated := newGame(games[id].width, games[id].height, games[id].cell, games[id].color, games[id].backgroundColor)
 
-		if games[i].stopped {
-			continue
-		}
-
-		updated := newGame(games[i].width, games[i].height, games[i].cell, games[i].color, games[i].backgroundColor)
-
-		for y := 1; y < games[i].height - 1; y++ {
-			for x := 1; x < games[i].width - 1; x++ { 
-				if games[i].board[x][y] == 103 || games[i].board[x][y] == 102 || games[i].board[x][y] == 3 {
-					updated.board[x][y] += 100
-					
-					updated.board[x][y - 1]++
-					updated.board[x][y + 1]++
-					updated.board[x - 1][y - 1]++
-					updated.board[x - 1][y]++
-					updated.board[x - 1][y + 1]++
-					updated.board[x + 1][y - 1]++
-					updated.board[x + 1][y]++
-					updated.board[x + 1][y + 1]++
-				}
+	for y := 1; y < games[id].height - 1; y++ {
+		for x := 1; x < games[id].width - 1; x++ { 
+			if games[id].board[x][y] == 103 || games[id].board[x][y] == 102 || games[id].board[x][y] == 3 {
+				updated.board[x][y] += 100
+				
+				updated.board[x][y - 1]++
+				updated.board[x][y + 1]++
+				updated.board[x - 1][y - 1]++
+				updated.board[x - 1][y]++
+				updated.board[x - 1][y + 1]++
+				updated.board[x + 1][y - 1]++
+				updated.board[x + 1][y]++
+				updated.board[x + 1][y + 1]++
 			}
 		}
-		
-		games[i] = &updated
 	}
-
+	
+	games[id] = &updated
+	games[id].toRender = true
 }
 
-// renderCanvases renders every game to proper canvas.
-func renderCanvases() {
-	for id := range games {
+// renders the game board with given id to proper canvas.
+func render(id string) {
+	context := js.Global().Get("document").Call("getElementById", id).Call("getContext", "2d")
 
-		context := js.Global().Get("document").Call("getElementById", id).Call("getContext", "2d")
+	context.Set("fillStyle", games[id].backgroundColor)
+	context.Call("fillRect", 0, 0, games[id].width*games[id].cell, games[id].height*games[id].cell)
 
-		context.Set("fillStyle", games[id].backgroundColor)
-		context.Call("fillRect", 0, 0, games[id].width*games[id].cell, games[id].height*games[id].cell)
-
-		context.Set("fillStyle", games[id].color)
-		for y := 1; y < games[id].height - 1; y++ {
-			for x := 1; x < games[id].width - 1; x++ {
-				if games[id].board[x][y] >= 100 {
-					context.Call("fillRect", (x - 1)*games[id].cell, (y - 1)*games[id].cell, games[id].cell, games[id].cell)	 			
-				}
+	context.Set("fillStyle", games[id].color)
+	for y := 1; y < games[id].height - 1; y++ {
+		for x := 1; x < games[id].width - 1; x++ {
+			if games[id].board[x][y] >= 100 {
+				context.Call("fillRect", (x - 1)*games[id].cell, (y - 1)*games[id].cell, games[id].cell, games[id].cell)	 			
 			}
 		}
 	}
+
+	games[id].toRender = false
 }
 
 // jsStop is a javascript function but cannot be called directly from javascript.
 // Updates and renders every game. Calls itself after that.
 func jsLoop(this js.Value, args []js.Value) interface{} {
 
-	updateCanvases()
-	renderCanvases()
+	for id := range games {
+
+		if !games[id].stopped {
+			update(id)
+		}
+
+		if games[id].toRender {
+			render(id)
+		}
+	}
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(jsLoop))
 	return js.Value{}
