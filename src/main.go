@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"math/rand"
 	"syscall/js"
 	"time"
@@ -113,7 +112,7 @@ func render(id string) {
 func jsLoop(this js.Value, args []js.Value) interface{} {
 
 	for id := range games {
-		log.Println("---", games[id].interval, games[id].nextRefresh, time.Now().UnixNano())
+
 		if games[id].nextRefresh <= time.Now().UnixNano() {
 			if !games[id].stopped {
 				update(id)
@@ -197,7 +196,6 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 		}
 	}
 
-	log.Println(games[id])
 	return js.Value{} 
 }
 
@@ -209,8 +207,6 @@ func jsNoise(this js.Value, args []js.Value) interface{} {
 	if len(args) >= 1 && args[0].Type() == js.TypeNumber {
 		percentage = args[0].Int()
 	}
-
-	log.Println(len(games))
 
 	for y := 1; y < games[id].height - 1; y++ {
 		for x := 1; x < games[id].width - 1; x++ {
@@ -407,15 +403,18 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("get", js.FuncOf(jsGet))		
 	canvas.Set("getNeighbours", js.FuncOf(jsGetNeighbours))	
 
-
 	cell := 10
 	if len(args) >= 2 && args[1].Type() == js.TypeNumber && args[1].Int() > 0 {
 		cell = args[1].Int()
 	}
 	width := 2 + canvas.Get("width").Int() / cell
 	height := 2 + canvas.Get("height").Int() / cell
+	interval := 150
+	if len(args) >= 3 && args[2].Type() == js.TypeNumber && args[2].Int() >= 0 {
+		interval = args[2].Int() 
+	}
 
-	game := newGame(width, height, cell, "#eee", "#555", 110, 0)
+	game := newGame(width, height, cell, "#eee", "#555", int64(interval * 1000000), 0)
 	games[id] = &game
 
 	return canvas
