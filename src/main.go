@@ -16,14 +16,14 @@ type Game struct {
 	stopped bool
 	color string
 	backgroundColor string
-	interval time.Duration
-	nextRefresh time.Time 
+	interval int64
+	nextRefresh int64
 	toRender bool
 }
 
 // newGame is a constructor for Game object.
-func newGame(width int, height int, cell int, color string, backgroundColor string) Game {
-	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor, 0, time.Now(), false}
+func newGame(width int, height int, cell int, color string, backgroundColor string, interval int64, nextRefresh int64) Game {
+	game := Game{[][]uint8{}, width, height, cell, false, color, backgroundColor, interval, nextRefresh, false}
 	for x := 0; x < game.width; x++ {
 		game.board = append(game.board, []uint8{})
 		for y := 0; y < game.height; y++ {
@@ -66,7 +66,7 @@ func kill(id string, x int, y int) {
 
 // updates the game board with given id.
 func update(id string) {
-	updated := newGame(games[id].width, games[id].height, games[id].cell, games[id].color, games[id].backgroundColor)
+	updated := newGame(games[id].width, games[id].height, games[id].cell, games[id].color, games[id].backgroundColor, games[id].interval, games[id].nextRefresh)
 
 	for y := 1; y < games[id].height - 1; y++ {
 		for x := 1; x < games[id].width - 1; x++ { 
@@ -113,14 +113,19 @@ func render(id string) {
 func jsLoop(this js.Value, args []js.Value) interface{} {
 
 	for id := range games {
+		log.Println("---", games[id].interval, games[id].nextRefresh, time.Now().UnixNano())
+		if games[id].nextRefresh <= time.Now().UnixNano() {
+			if !games[id].stopped {
+				update(id)
+			}
+	
+			if games[id].toRender {
+				render(id)
+			}
 
-		if !games[id].stopped {
-			update(id)
+			games[id].nextRefresh = time.Now().UnixNano() + games[id].interval
 		}
 
-		if games[id].toRender {
-			render(id)
-		}
 	}
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(jsLoop))
@@ -166,7 +171,7 @@ func jsSetBackgroundColor(this js.Value, args []js.Value) interface{} {
 // (note that if the game board was big, the time to calculate and render would be longer that this interval)
 // As arg[0] it recieves minimal interval in ms (javascript number).
 func jsSetMinInterval(this js.Value, args []js.Value) interface{} {
-	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeString) {
+	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeNumber) {
 		return js.Value{}
 	}
 
@@ -175,7 +180,8 @@ func jsSetMinInterval(this js.Value, args []js.Value) interface{} {
 	if args[0].Int() > 0 {
 		interval = args[0].Int()
 	}
-	games[id].interval = time.Duration(interval * 1000000)
+	games[id].interval = int64(interval * 1000000)
+	games[id].nextRefresh = int64(0)
 
 	return js.Value{} 
 }
@@ -311,7 +317,7 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 // Returns the minimum interval between two calls of rendering funcion in milliseconds.
 // (note that if the game board was big, the time to calculate and render would be longer that this interval)
 func jsGetMinInterval(this js.Value, args []js.Value) interface{} {
-	return games[this.Get("id").String()].interval * 1000000
+	return games[this.Get("id").String()].interval / 1000000
 }
 
 // jsGetWidthInPx is a function called from javascript on an initialized canvas element. 
@@ -409,7 +415,7 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	width := 2 + canvas.Get("width").Int() / cell
 	height := 2 + canvas.Get("height").Int() / cell
 
-	game := newGame(width, height, cell, "#eee", "#555")
+	game := newGame(width, height, cell, "#eee", "#555", 110, 0)
 	games[id] = &game
 
 	return canvas
