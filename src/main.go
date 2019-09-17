@@ -345,6 +345,7 @@ func jsIsStopped(this js.Value, args []js.Value) interface{} {
 
 // jsStartGameOfLife is a function called from javascript. Initializes Game of Life for the canvas with given id.
 // As arg[0] it recieves id of the canvas (javascript string).
+// As optional arg[1] it recieves game cell size in pixels (javascript number).
 // Returns javascript undefined if cannot initialize the canvas. Otherwise returns the initialized canvas.
 func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	if len(args) == 0 && args[0].Type() != js.TypeString {
@@ -379,9 +380,14 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("get", js.FuncOf(jsGet))		
 	canvas.Set("getNeighbours", js.FuncOf(jsGetNeighbours))	
 
+
 	cell := 10
+	if len(args) >= 2 && args[1].Type() == js.TypeNumber && args[1].Int() > 0 {
+		cell = args[1].Int()
+	}
 	width := 2 + canvas.Get("width").Int() / cell
 	height := 2 + canvas.Get("height").Int() / cell
+
 	game := newGame(width, height, cell, "#eee", "#555")
 	games[id] = &game
 

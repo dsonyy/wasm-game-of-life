@@ -17,14 +17,14 @@
 	</head>
 	<body>
 		</style>
-		<canvas id="root" data-conways width="100px" height="999px" style="background-color: #006"></canvas>
-		<!-- <canvas id="root" data-conways width="10px" height="100px" style="background-color: blue"></canvas> -->
-		<!-- <canvas id="asdf" data-conways width="100px" height="100px" style="background-color: blue"></canvas> -->
+		<canvas id="root" width="999px" height="999px" style="background-color: #006"></canvas>
+		<canvas id="asdf" width="300px" height="300px" style="background-color: blue"></canvas>
 
 		<script>
 			let canvas = document.getElementById("root");
-			canvas.width = window.innerWidth;
-			canvas.height = window.innerHeight;
+
+			// canvas.width = window.innerWidth;
+			// canvas.height = window.innerHeight;
 
 			let asdf = new Promise(function(resolve, reject) {
 				const go = new Go();
@@ -33,10 +33,16 @@
 				});
 				setTimeout(resolve, 1000);
 			}).then(function() {
-				startGameOfLife("root")
+				startGameOfLife("root", 2)
 				canvas.setBackgroundColor("#006")
 				canvas.setColor("#dd0")
 				canvas.noise(70)
+
+				let asdf = startGameOfLife("asdf", 0)
+				asdf.setBackgroundColor("#060")
+				asdf.setColor("#dd0")
+				asdf.noise(70)
+
 
 			}).catch(function() {
 
