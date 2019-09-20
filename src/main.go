@@ -151,6 +151,7 @@ func jsResume(this js.Value, args []js.Value) interface{} {
 func jsSetColor(this js.Value, args []js.Value) interface{} {
 	if len(args) > 0 && args[0].Type() == js.TypeString {
 		games[this.Get("id").String()].color = args[0].String()
+		games[this.Get("id").String()].toRender = true
 	}
 	return js.Value{}
 }
@@ -161,6 +162,7 @@ func jsSetColor(this js.Value, args []js.Value) interface{} {
 func jsSetBackgroundColor(this js.Value, args []js.Value) interface{} {
 	if game, exist := games[this.Get("id").String()] ; exist && len(args) > 0 && args[0].Type() == js.TypeString {
 		game.backgroundColor = args[0].String()
+		game.toRender = true
 	}
 	return js.Value{}
 }
@@ -196,6 +198,7 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 		}
 	}
 
+	games[id].toRender = true
 	return js.Value{} 
 }
 
@@ -232,8 +235,9 @@ func jsBirth(this js.Value, args []js.Value) interface{} {
 		y := args[1].Int() + 1
 
 		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 &&
-		games[id].board[y][x] < 100 {
+		games[id].board[x][y] < 100 {
 			birth(id, x, y)
+			games[id].toRender = true
 			return true
 		}
 	}
@@ -254,8 +258,9 @@ func jsKill(this js.Value, args []js.Value) interface{} {
 		y := args[1].Int() + 1
 
 		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 &&
-		games[id].board[y][x] >= 100 {
+		games[id].board[x][y] >= 100 {
 			kill(id, x, y)
+			games[id].toRender = true
 			return true
 		}
 	}
