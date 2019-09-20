@@ -194,7 +194,7 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 
 	for y := 0; y < games[id].height; y++ {
 		for x := 0; x < games[id].width; x++ {
-			games[id].board[y][x] = 0
+			games[id].board[x][y] = 0
 		}
 	}
 
@@ -280,10 +280,10 @@ func jsGetNeighbours(this js.Value, args []js.Value) interface{} {
 		y := args[1].Int() + 1
 
 		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1 {
-			if games[id].board[y][x] >= 100 {
-				return games[id].board[y][x] - 100
+			if games[id].board[x][y] >= 100 {
+				return games[id].board[x][y] - 100
 			} else {
-				return games[id].board[y][x]
+				return games[id].board[x][y]
 			}
 		}
 	}
@@ -303,7 +303,7 @@ func jsGet(this js.Value, args []js.Value) interface{} {
 		y := args[1].Int() + 1
 
 		if x >= 1 && y >= 1 && x < games[id].width - 1 && y < games[id].height - 1{
-			if games[id].board[y][x] >= 100 {
+			if games[id].board[x][y] >= 100 {
 				return true
 			} else {
 				return false
