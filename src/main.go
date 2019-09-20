@@ -107,6 +107,8 @@ func render(id string) {
 	games[id].toRender = false
 }
 
+
+
 // jsStop is a javascript function but cannot be called directly from javascript.
 // Updates and renders every game. Calls itself after that.
 func jsLoop(this js.Value, args []js.Value) interface{} {
@@ -143,6 +145,20 @@ func jsStop(this js.Value, args []js.Value) interface{} {
 func jsResume(this js.Value, args []js.Value) interface{} {
 	games[this.Get("id").String()].stopped = false
 	return js.Value{}
+}
+
+// jsSetSeed is a function called from javascript on an initialized canvas element.
+// Sets random seed for entire Game of Life (if no arguments sets UTF time as the seed).
+// As optional arg[0] it recieves the seed (javascript number).
+func jsSetSeed(this js.Value, args []js.Value) interface{} {
+	seed := time.Now().UTC().UnixNano()
+
+	if len(args) > 0 && args[0].Type() == js.TypeNumber {
+		seed = int64(args[0].Int())
+	}
+
+	rand.Seed(seed)
+	return seed
 }
 
 // jsSetColor is a function called from javascript on an initialized canvas element.
@@ -202,7 +218,10 @@ func jsClear(this js.Value, args []js.Value) interface{} {
 	return js.Value{} 
 }
 
-func jsNoise(this js.Value, args []js.Value) interface{} {
+// jsRandomBirth is a function called from javascript on an initialized canvas element.
+// Randomly sets active cells with a given probability in % (if no arguments sets 50%).
+// As optional arg[0] it recieves probability in % (javascript number).
+func jsRandomBirth(this js.Value, args []js.Value) interface{} {
 	id := this.Get("id").String()
 
 	percentage := 50
@@ -213,14 +232,40 @@ func jsNoise(this js.Value, args []js.Value) interface{} {
 
 	for y := 1; y < games[id].height - 1; y++ {
 		for x := 1; x < games[id].width - 1; x++ {
-			if (percentage < rand.Intn(100)) {
+			if games[id].board[x][y] < 100 && percentage > rand.Intn(100) {
 				birth(id, x, y)
 			}
 		}
 	}
 
+	games[id].toRender = true
 	return js.Value{} 
 }
+
+// jsRandomKill is a function called from javascript on an initialized canvas element.
+// Randomly sets inactive cells with a given probability in % (if no arguments sets 50%).
+// As optional arg[0] it recieves probability in % (javascript number).
+func jsRandomKill(this js.Value, args []js.Value) interface{} {
+	id := this.Get("id").String()
+
+	percentage := 50
+
+	if len(args) >= 1 && args[0].Type() == js.TypeNumber {
+		percentage = args[0].Int()
+	}
+
+	for y := 1; y < games[id].height - 1; y++ {
+		for x := 1; x < games[id].width - 1; x++ {
+			if games[id].board[x][y] >= 100 && percentage > rand.Intn(100) {
+				kill(id, x, y)
+			}
+		}
+	}
+
+	games[id].toRender = true
+	return js.Value{} 
+}
+
 
 // jsBirth is a function called from javascript on an initialized canvas element.
 // Sets the cell as active.
@@ -386,8 +431,6 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 		return js.Value{}
 	}
 
-	canvas.Set("noise", js.FuncOf(jsNoise))
-
 	canvas.Set("getWidthInPx", js.FuncOf(jsGetWidthInPx))
 	canvas.Set("getHeightInPx", js.FuncOf(jsGetHeightInPx))
 	canvas.Set("getWidthInCells", js.FuncOf(jsGetWidthInCells))
@@ -398,6 +441,7 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("getMinInterval", js.FuncOf(jsGetMinInterval))
 	canvas.Set("isStopped", js.FuncOf(jsIsStopped))
 	canvas.Set("setColor", js.FuncOf(jsSetColor))
+	canvas.Set("setSeed", js.FuncOf(jsSetSeed))
 	canvas.Set("setBackgroundColor", js.FuncOf(jsSetBackgroundColor))
 	canvas.Set("setMinInterval", js.FuncOf(jsSetMinInterval))
 	canvas.Set("stop", js.FuncOf(jsStop))
@@ -405,8 +449,12 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("clear", js.FuncOf(jsClear))
 	canvas.Set("birth", js.FuncOf(jsBirth))
 	canvas.Set("kill", js.FuncOf(jsKill))		
+	canvas.Set("randomKill", js.FuncOf(jsRandomKill))
+	canvas.Set("randomBirth", js.FuncOf(jsRandomBirth))
 	canvas.Set("get", js.FuncOf(jsGet))		
 	canvas.Set("getNeighbours", js.FuncOf(jsGetNeighbours))	
+
+
 
 	cell := 10
 	if len(args) >= 2 && args[1].Type() == js.TypeNumber && args[1].Int() > 0 {
