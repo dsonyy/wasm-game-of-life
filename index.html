@@ -42,7 +42,7 @@
 
 			new Promise(function(resolve, reject) {
 				const go = new Go();
-				WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+				WebAssembly.instantiateStreaming(fetch("https://dsonyy.github.io/wasm-game-of-life/main.wasm"), go.importObject).then((result) => {
 					go.run(result.instance);
 				});
 				setTimeout(resolve, 1000);
