@@ -5,7 +5,6 @@
 		<style>
 			html, body {
 				height: 100%;
-				/* overflow: hidden; */
 				margin: 0;
 			}
 
@@ -17,30 +16,37 @@
 	</head>
 	<body>
 		</style>
-		<canvas id="root" data-conways width="100px" height="999px" style="background-color: #006"></canvas>
-		<!-- <canvas id="root" data-conways width="10px" height="100px" style="background-color: blue"></canvas> -->
-		<!-- <canvas id="asdf" data-conways width="100px" height="100px" style="background-color: blue"></canvas> -->
-
+		<canvas id="game" width="99px" height="99px" style="background-color: #006"></canvas>
 		<script>
-			let canvas = document.getElementById("root");
+			function initCanvases() {
+				let c1 = startGameOfLife("game", 8, 1000);
+				c1.setBackgroundColor("#111");
+				c1.setColor("#ccc");
+				c1.randomBirth(20);
+			}
+
+			let canvas = document.getElementById("game");
+
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
 
-			let asdf = new Promise(function(resolve, reject) {
+			window.addEventListener('resize', function(event){
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+
+				let c1 = startGameOfLife("game", 8, 1000);
+				c1.setBackgroundColor("#111");
+				c1.setColor("#ccc");
+				c1.randomBirth(20);
+			});
+
+			new Promise(function(resolve, reject) {
 				const go = new Go();
 				WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
 					go.run(result.instance);
 				});
 				setTimeout(resolve, 1000);
-			}).then(function() {
-				startGameOfLife("root")
-				canvas.setBackgroundColor("#006")
-				canvas.setColor("#dd0")
-				canvas.noise(70)
-
-			}).catch(function() {
-
-			});
+			}).then(initCanvases).catch(function() {});
 
 
 		</script>
