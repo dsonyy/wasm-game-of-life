@@ -414,6 +414,49 @@ func jsIsStopped(this js.Value, args []js.Value) interface{} {
 	return games[this.Get("id").String()].stopped
 }
 
+// jsEndGameOfLife is a function called from javascript. Finishes and cleans up Game of Life for the canvas with given id.
+// As arg[0] it recieves id of the canvas (javascript string).
+// Returns javascript undefined if cannot finish the canvas. Otherwise returns finished canvas.
+func jsEndGameOfLife(this js.Value, args []js.Value) interface{} {
+	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeString){
+		return js.Value{}
+	}
+
+	id := args[0].String()
+
+	canvas := js.Global().Get("document").Call("getElementById", id)
+
+	if canvas.Type() != js.TypeObject {
+		return js.Value{}
+	}
+
+	canvas.Set("getWidthInPx", js.ValueOf(js.Value{}))
+	canvas.Set("getHeightInPx", js.ValueOf(js.Value{}))
+	canvas.Set("getWidthInCells", js.ValueOf(js.Value{}))
+	canvas.Set("getHeightInCells", js.ValueOf(js.Value{}))
+	canvas.Set("getColor", js.ValueOf(js.Value{}))
+	canvas.Set("getBackgroundColor", js.ValueOf(js.Value{}))
+	canvas.Set("getCellSize", js.ValueOf(js.Value{}))
+	canvas.Set("getMinInterval", js.ValueOf(js.Value{}))
+	canvas.Set("isStopped", js.ValueOf(js.Value{}))
+	canvas.Set("setColor", js.ValueOf(js.Value{}))
+	canvas.Set("setBackgroundColor", js.ValueOf(js.Value{}))
+	canvas.Set("setMinInterval", js.ValueOf(js.Value{}))
+	canvas.Set("stop", js.ValueOf(js.Value{}))
+	canvas.Set("resume", js.ValueOf(js.Value{}))
+	canvas.Set("clear", js.ValueOf(js.Value{}))
+	canvas.Set("birth", js.ValueOf(js.Value{}))
+	canvas.Set("kill", js.ValueOf(js.Value{}))
+	canvas.Set("randomKill", js.ValueOf(js.Value{}))
+	canvas.Set("randomBirth", js.ValueOf(js.Value{}))
+	canvas.Set("get", js.ValueOf(js.Value{}))
+	canvas.Set("getNeighbours", js.ValueOf(js.Value{}))
+
+	delete(games, id)
+
+	return js.Value{}
+}
+
 // jsStartGameOfLife is a function called from javascript. Initializes Game of Life for the canvas with given id.
 // As arg[0] it recieves id of the canvas (javascript string).
 // As optional arg[1] it recieves game cell size in pixels (javascript number).
@@ -424,6 +467,10 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	}
 
 	id := args[0].String()
+
+	if _, exist := games[id] ; exist {
+		jsEndGameOfLife(this, args)
+	}
 
 	canvas := js.Global().Get("document").Call("getElementById", id)
 
@@ -470,49 +517,6 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	games[id] = &game
 
 	return canvas
-}
-
-// jsEndGameOfLife is a function called from javascript. Finishes and cleans up Game of Life for the canvas with given id.
-// As arg[0] it recieves id of the canvas (javascript string).
-// Returns javascript undefined if cannot finish the canvas. Otherwise returns finished canvas.
-func jsEndGameOfLife(this js.Value, args []js.Value) interface{} {
-	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeString){
-		return js.Value{}
-	}
-
-	id := args[0].String()
-
-	canvas := js.Global().Get("document").Call("getElementById", id)
-
-	if canvas.Type() != js.TypeObject {
-		return js.Value{}
-	}
-
-	canvas.Set("getWidthInPx", js.ValueOf(js.Value{}))
-	canvas.Set("getHeightInPx", js.ValueOf(js.Value{}))
-	canvas.Set("getWidthInCells", js.ValueOf(js.Value{}))
-	canvas.Set("getHeightInCells", js.ValueOf(js.Value{}))
-	canvas.Set("getColor", js.ValueOf(js.Value{}))
-	canvas.Set("getBackgroundColor", js.ValueOf(js.Value{}))
-	canvas.Set("getCellSize", js.ValueOf(js.Value{}))
-	canvas.Set("getMinInterval", js.ValueOf(js.Value{}))
-	canvas.Set("isStopped", js.ValueOf(js.Value{}))
-	canvas.Set("setColor", js.ValueOf(js.Value{}))
-	canvas.Set("setBackgroundColor", js.ValueOf(js.Value{}))
-	canvas.Set("setMinInterval", js.ValueOf(js.Value{}))
-	canvas.Set("stop", js.ValueOf(js.Value{}))
-	canvas.Set("resume", js.ValueOf(js.Value{}))
-	canvas.Set("clear", js.ValueOf(js.Value{}))
-	canvas.Set("birth", js.ValueOf(js.Value{}))
-	canvas.Set("kill", js.ValueOf(js.Value{}))
-	canvas.Set("randomKill", js.ValueOf(js.Value{}))
-	canvas.Set("randomBirth", js.ValueOf(js.Value{}))
-	canvas.Set("get", js.ValueOf(js.Value{}))
-	canvas.Set("getNeighbours", js.ValueOf(js.Value{}))
-
-	delete(games, id)
-
-	return js.Value{}
 }
 
 

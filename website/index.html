@@ -5,7 +5,6 @@
 		<style>
 			html, body {
 				height: 100%;
-				/* overflow: hidden; */
 				margin: 0;
 			}
 
@@ -17,30 +16,31 @@
 	</head>
 	<body>
 		</style>
-		<canvas id="root" width="99px" height="99px" style="background-color: #006"></canvas>
-		<canvas id="asdf" width="999px" height="999px" style="background-color: blue"></canvas>
-
+		<canvas id="game" width="99px" height="99px" style="background-color: #006"></canvas>
 		<script>
 			function initCanvases() {
-				
-				let c1 = startGameOfLife("root", 2);
-				c1.setBackgroundColor("#006");
-				c1.setColor("#dd0");
-				c1.randomBirth(10);
-
-				let c2 = startGameOfLife("asdf", 2);
-				c2.setBackgroundColor("#060");
-				c2.setColor("#dd0");
-				c2.randomBirth(50);
-				//c2.stop();
+				let c1 = startGameOfLife("game", 8, 1000);
+				c1.setBackgroundColor("#111");
+				c1.setColor("#ccc");
+				c1.randomBirth(20);
 			}
 
-			let canvas = document.getElementById("root");
+			let canvas = document.getElementById("game");
 
-			// canvas.width = window.innerWidth;
-			// canvas.height = window.innerHeight;
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
 
-			let asdf = new Promise(function(resolve, reject) {
+			window.addEventListener('resize', function(event){
+				canvas.width = window.innerWidth;
+				canvas.height = window.innerHeight;
+
+				let c1 = startGameOfLife("game", 8, 1000);
+				c1.setBackgroundColor("#111");
+				c1.setColor("#ccc");
+				c1.randomBirth(20);
+			});
+
+			new Promise(function(resolve, reject) {
 				const go = new Go();
 				WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
 					go.run(result.instance);
