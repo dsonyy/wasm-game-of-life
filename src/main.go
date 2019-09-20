@@ -441,7 +441,6 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 	canvas.Set("getMinInterval", js.FuncOf(jsGetMinInterval))
 	canvas.Set("isStopped", js.FuncOf(jsIsStopped))
 	canvas.Set("setColor", js.FuncOf(jsSetColor))
-	canvas.Set("setSeed", js.FuncOf(jsSetSeed))
 	canvas.Set("setBackgroundColor", js.FuncOf(jsSetBackgroundColor))
 	canvas.Set("setMinInterval", js.FuncOf(jsSetMinInterval))
 	canvas.Set("stop", js.FuncOf(jsStop))
@@ -477,6 +476,42 @@ func jsStartGameOfLife(this js.Value, args []js.Value) interface{} {
 // As arg[0] it recieves id of the canvas (javascript string).
 // Returns javascript undefined if cannot finish the canvas. Otherwise returns finished canvas.
 func jsEndGameOfLife(this js.Value, args []js.Value) interface{} {
+	if len(args) == 0 || (len(args) >= 1 && args[0].Type() != js.TypeString){
+		return js.Value{}
+	}
+
+	id := args[0].String()
+
+	canvas := js.Global().Get("document").Call("getElementById", id)
+
+	if canvas.Type() != js.TypeObject {
+		return js.Value{}
+	}
+
+	canvas.Set("getWidthInPx", js.ValueOf(js.Value{}))
+	canvas.Set("getHeightInPx", js.ValueOf(js.Value{}))
+	canvas.Set("getWidthInCells", js.ValueOf(js.Value{}))
+	canvas.Set("getHeightInCells", js.ValueOf(js.Value{}))
+	canvas.Set("getColor", js.ValueOf(js.Value{}))
+	canvas.Set("getBackgroundColor", js.ValueOf(js.Value{}))
+	canvas.Set("getCellSize", js.ValueOf(js.Value{}))
+	canvas.Set("getMinInterval", js.ValueOf(js.Value{}))
+	canvas.Set("isStopped", js.ValueOf(js.Value{}))
+	canvas.Set("setColor", js.ValueOf(js.Value{}))
+	canvas.Set("setBackgroundColor", js.ValueOf(js.Value{}))
+	canvas.Set("setMinInterval", js.ValueOf(js.Value{}))
+	canvas.Set("stop", js.ValueOf(js.Value{}))
+	canvas.Set("resume", js.ValueOf(js.Value{}))
+	canvas.Set("clear", js.ValueOf(js.Value{}))
+	canvas.Set("birth", js.ValueOf(js.Value{}))
+	canvas.Set("kill", js.ValueOf(js.Value{}))
+	canvas.Set("randomKill", js.ValueOf(js.Value{}))
+	canvas.Set("randomBirth", js.ValueOf(js.Value{}))
+	canvas.Set("get", js.ValueOf(js.Value{}))
+	canvas.Set("getNeighbours", js.ValueOf(js.Value{}))
+
+	delete(games, id)
+
 	return js.Value{}
 }
 
@@ -487,6 +522,8 @@ func main() {
 	games = make(map[string]*Game)
 
 	js.Global().Set("startGameOfLife", js.FuncOf(jsStartGameOfLife))
+	js.Global().Set("endGameOfLife", js.FuncOf(jsEndGameOfLife))
+	js.Global().Set("setGameOfLifeSeed", js.FuncOf(jsSetSeed))
 
 	js.Global().Get("window").Call("requestAnimationFrame", js.FuncOf(jsLoop))
 
