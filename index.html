@@ -29,6 +29,10 @@
 
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
+			
+			canvas.getContext("2d").font = "30px Arial";
+			canvas.getContext("2d").fillStyle = "#555555";
+			canvas.getContext("2d").fillText("If nothing happened, wait a few seconds or refresh ;(",25,25);
 
 			window.addEventListener('resize', function(event){
 				canvas.width = window.innerWidth;
